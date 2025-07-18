@@ -1,0 +1,75 @@
+version: '3.8'
+
+services:
+  app:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    container_name: rtb-app
+    restart: unless-stopped
+    tty: true
+    environment:
+      DB_HOST: mysql
+      
+    volumes:
+      - ./:/var/www
+    networks:
+      - rtb-network
+    depends_on:
+      - mysql
+
+  nginx:
+    image: nginx:alpine
+    container_name: rtb-nginx
+    restart: unless-stopped
+    ports:
+      - "8000:80"
+    volumes:
+      - ./:/var/www
+      - ./docker/nginx:/etc/nginx/conf.d
+    networks:
+      - rtb-network
+    depends_on:
+      - app
+
+  mysql:
+    image: mysql:8.0
+    container_name: rtb-mysql
+    environment:
+      MYSQL_DATABASE: rtb
+      MYSQL_USER: laravel
+      MYSQL_PASSWORD: secret
+      MYSQL_ROOT_PASSWORD: secret
+    volumes:
+      - rtb-mysql:/var/lib/mysql
+    networks:
+      - rtb-network
+
+  scheduler:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    container_name: rtb-scheduler
+    command: bash -c "while true; do php artisan schedule:run; sleep 60; done"
+    depends_on:
+      - app
+    networks:
+      - rtb-network
+
+  queue:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    container_name: rtb-queue
+    command: php artisan queue:work --sleep=3 --tries=3
+    depends_on:
+      - app
+    networks:
+      - rtb-network
+
+volumes:
+  rtb-mysql:
+
+networks:
+  rtb-network:
+    driver: bridge
