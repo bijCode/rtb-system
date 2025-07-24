@@ -14,6 +14,12 @@ class AdSlot extends Model
         'end_time' => 'datetime',
     ];
 
+    protected $fillable = [
+        'name', 
+        'description',
+        'min_bid',
+        'status',
+    ];
     public function bids()
     {
         return $this->hasMany(Bid::class);

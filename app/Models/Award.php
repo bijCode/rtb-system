@@ -8,7 +8,11 @@ use Illuminate\Database\Eloquent\Model;
 class Award extends Model
 {
     use HasFactory;
-
+    protected $fillable = [
+        'ad_slot_id', 
+        'bid_id',
+        'user_id',
+    ];
     public function adSlot()
     {
         return $this->belongsTo(AdSlot::class);
